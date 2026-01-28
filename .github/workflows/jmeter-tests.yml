@@ -27,11 +27,18 @@ jobs:
           tar -xzf apache-jmeter-$JMETER_VERSION.tgz
           mv apache-jmeter-$JMETER_VERSION jmeter-bin
           
+      - name: Install JMeter Plugins Manager
+        run: |
+          wget https://repo1.maven.org/maven2/kg/apc/jmeter-plugins-manager/1.10/jmeter-plugins-manager-1.10.jar \
+            -O jmeter-bin/lib/ext/jmeter-plugins-manager.jar
+          wget https://repo1.maven.org/maven2/kg/apc/cmdrunner/2.3/cmdrunner-2.3.jar \
+            -O jmeter-bin/lib/cmdrunner-2.3.jar
+          java -cp jmeter-bin/lib/ext/jmeter-plugins-manager.jar org.jmeterplugins.repository.PluginManagerCMDInstaller
+
+          
       - name: Install Prometheus Listener Plugin
         run: |
-          mkdir -p jmeter-bin/lib/ext
-          wget https://github.com/johrstrom/jmeter-prometheus-plugin/releases/download/v0.5.0/jmeter-prometheus-plugin-0.5.0.jar \
-            -O jmeter-bin/lib/ext/jmeter-prometheus-plugin.jar
+          jmeter-bin/bin/PluginsManagerCMD.sh install jmeter-prometheus-listener
 
 
       - name: Run JMeter test (non-GUI)
