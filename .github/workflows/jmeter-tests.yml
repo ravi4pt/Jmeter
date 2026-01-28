@@ -30,7 +30,7 @@ jobs:
       - name: Install Prometheus Listener Plugin
         run: |
           mkdir -p jmeter-bin/lib/ext
-          wget https://github.com/johrstrom/jmeter-prometheus-plugin/releases/download/v0.6.0/jmeter-prometheus-plugin-0.6.0.jar \
+          wget https://github.com/johrstrom/jmeter-prometheus-plugin/releases/download/v0.5.0/jmeter-prometheus-plugin-0.5.0.jar \
             -O jmeter-bin/lib/ext/jmeter-prometheus-plugin.jar
 
 
