@@ -38,7 +38,7 @@ jobs:
           
       - name: Copy Prometheus plugin
         run: |
-            cp jmeter/lib/ext/jmeter-prometheus-plugin.jar jmeter-bin/lib/ext/
+            cp jmeter/lib/ext/jmeter-prometheus-plugin-0.6.0.jar jmeter-bin/lib/ext/
 
 
 
