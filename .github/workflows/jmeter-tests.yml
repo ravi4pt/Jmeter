@@ -3,12 +3,21 @@ name: Run JMeter Tests
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - "jmeter/tests/**/*.jmx"
+      - "jmeter/tests/**/*.csv"
   pull_request:
     branches: [ "main" ]
+    paths:
+      - "jmeter/tests/**/*.jmx"
+      - "jmeter/tests/**/*.csv"
 
 jobs:
   jmeter-test:
     runs-on: ubuntu-latest
+
+    env:
+      RESULTS_DIR: "results_${{ github.run_id }}"
 
     steps:
       - name: Checkout repository
@@ -26,7 +35,7 @@ jobs:
           wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-$JMETER_VERSION.tgz
           tar -xzf apache-jmeter-$JMETER_VERSION.tgz
           mv apache-jmeter-$JMETER_VERSION jmeter-bin
-          
+
       - name: Install JMeter Plugins Manager
         run: |
           wget https://repo1.maven.org/maven2/kg/apc/jmeter-plugins-manager/1.10/jmeter-plugins-manager-1.10.jar \
@@ -40,20 +49,27 @@ jobs:
         run: |
             cp jmeter/lib/ext/jmeter-prometheus-plugin-0.6.0.jar jmeter-bin/lib/ext/
 
-
+      - name: Prepare results folder
+        run: mkdir -p $RESULTS_DIR
 
       - name: Run JMeter test (non-GUI)
         run: |
-          mkdir -p results
           ./jmeter-bin/bin/jmeter \
             -n \
             -t jmeter/tests/S01_JPetStore.jmx \
-            -l results/results.jtl \
-            -j results/jmeter.log \
-            -Jenv=SIT
+            -l $RESULTS_DIR/results.jtl \
+            -j $RESULTS_DIR/jmeter.log \
+            -Jenv=SIT \
+            -Jsummariser.name=${{ github.run_id }}
 
-      - name: Upload JMeter results
+      - name: Generate HTML Report
+        run: |
+          ./jmeter-bin/bin/jmeter \
+            -g $RESULTS_DIR/results.jtl \
+            -o $RESULTS_DIR/html
+
+      - name: Upload Results
         uses: actions/upload-artifact@v4
         with:
-          name: jmeter-results
-          path: results/
+          name: jmeter-results-${{ github.run_id }}
+          path: ${{ env.RESULTS_DIR }}
