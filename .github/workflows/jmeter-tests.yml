@@ -26,6 +26,13 @@ jobs:
           wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-$JMETER_VERSION.tgz
           tar -xzf apache-jmeter-$JMETER_VERSION.tgz
           mv apache-jmeter-$JMETER_VERSION jmeter-bin
+          
+      - name: Install Prometheus Listener Plugin
+        run: |
+          mkdir -p jmeter-bin/lib/ext
+          wget https://github.com/johrstrom/jmeter-prometheus-plugin/releases/download/v0.6.0/jmeter-prometheus-plugin-0.6.0.jar \
+            -O jmeter-bin/lib/ext/jmeter-prometheus-plugin.jar
+
 
       - name: Run JMeter test (non-GUI)
         run: |
