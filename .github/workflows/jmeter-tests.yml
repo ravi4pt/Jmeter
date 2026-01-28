@@ -36,9 +36,10 @@ jobs:
           java -cp jmeter-bin/lib/ext/jmeter-plugins-manager.jar org.jmeterplugins.repository.PluginManagerCMDInstaller
 
           
-      - name: Install Prometheus Listener Plugin
+      - name: Copy Prometheus plugin
         run: |
-          jmeter-bin/bin/PluginsManagerCMD.sh install jmeter-prometheus-listener
+            cp jmeter/lib/ext/jmeter-prometheus-plugin.jar jmeter-bin/lib/ext/
+
 
 
       - name: Run JMeter test (non-GUI)
