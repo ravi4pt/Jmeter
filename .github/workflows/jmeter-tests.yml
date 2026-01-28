@@ -44,10 +44,9 @@ jobs:
             -O jmeter-bin/lib/cmdrunner-2.3.jar
           java -cp jmeter-bin/lib/ext/jmeter-plugins-manager.jar org.jmeterplugins.repository.PluginManagerCMDInstaller
 
-          
       - name: Copy Prometheus plugin
         run: |
-            cp jmeter/lib/ext/jmeter-prometheus-plugin-0.6.0.jar jmeter-bin/lib/ext/
+          cp jmeter/lib/ext/jmeter-prometheus-plugin-0.6.0.jar jmeter-bin/lib/ext/
 
       - name: Prepare results folder
         run: mkdir -p $RESULTS_DIR
@@ -73,3 +72,28 @@ jobs:
         with:
           name: jmeter-results-${{ github.run_id }}
           path: ${{ env.RESULTS_DIR }}
+
+  publish-report:
+    needs: jmeter-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download HTML report artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: jmeter-results-${{ github.run_id }}
+          path: report
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: report
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
