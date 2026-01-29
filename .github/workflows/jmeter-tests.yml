@@ -50,12 +50,13 @@ jobs:
           tar -xzf apache-jmeter-${JMETER_VERSION}.tgz
           mv apache-jmeter-${JMETER_VERSION} ${JMETER_HOME}
 
-      - name: Install JMeter Plugins Manager
+      - name: Install JMeter Plugins Manager (Linux-safe)
         run: |
           wget -q https://repo1.maven.org/maven2/kg/apc/jmeter-plugins-manager/1.10/jmeter-plugins-manager-1.10.jar \
             -O ${JMETER_HOME}/lib/ext/jmeter-plugins-manager.jar
           wget -q https://repo1.maven.org/maven2/kg/apc/cmdrunner/2.3/cmdrunner-2.3.jar \
             -O ${JMETER_HOME}/lib/cmdrunner-2.3.jar
+
           java -cp ${JMETER_HOME}/lib/ext/jmeter-plugins-manager.jar \
             org.jmeterplugins.repository.PluginManagerCMDInstaller
 
