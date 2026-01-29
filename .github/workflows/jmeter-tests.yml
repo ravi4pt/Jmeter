@@ -17,88 +17,90 @@ on:
       - "jmeter/tests/**/*.jmx"
       - "jmeter/tests/**/*.csv"
 
+env:
+  JMETER_VERSION: 5.6.3
+  JMETER_HOME: jmeter
+  RESULTS_DIR: results_${{ github.run_id }}
+
 jobs:
   jmeter-test:
     runs-on: ubuntu-latest
-
-    env:
-      RESULTS_DIR: "results_${{ github.run_id }}"
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Java
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '11'
+          cache: gradle
 
-      - name: Download JMeter
+      - name: Cache JMeter
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.JMETER_HOME }}
+          key: jmeter-${{ env.JMETER_VERSION }}
+
+      - name: Download JMeter (if not cached)
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          JMETER_VERSION=5.6.3
-          wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-$JMETER_VERSION.tgz
-          tar -xzf apache-jmeter-$JMETER_VERSION.tgz
-          mv apache-jmeter-$JMETER_VERSION jmeter-bin
+          wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-${JMETER_VERSION}.tgz
+          tar -xzf apache-jmeter-${JMETER_VERSION}.tgz
+          mv apache-jmeter-${JMETER_VERSION} ${JMETER_HOME}
 
-      - name: Install JMeter Plugins Manager
+      - name: Install JMeter Plugins
         run: |
-          wget https://repo1.maven.org/maven2/kg/apc/jmeter-plugins-manager/1.10/jmeter-plugins-manager-1.10.jar \
-            -O jmeter-bin/lib/ext/jmeter-plugins-manager.jar
-          wget https://repo1.maven.org/maven2/kg/apc/cmdrunner/2.3/cmdrunner-2.3.jar \
-            -O jmeter-bin/lib/cmdrunner-2.3.jar
-          java -cp jmeter-bin/lib/ext/jmeter-plugins-manager.jar org.jmeterplugins.repository.PluginManagerCMDInstaller
+          wget -q https://repo1.maven.org/maven2/kg/apc/jmeter-plugins-manager/1.10/jmeter-plugins-manager-1.10.jar \
+            -O ${JMETER_HOME}/lib/ext/jmeter-plugins-manager.jar
+          wget -q https://repo1.maven.org/maven2/kg/apc/cmdrunner/2.3/cmdrunner-2.3.jar \
+            -O ${JMETER_HOME}/lib/cmdrunner-2.3.jar
+          java -cp ${JMETER_HOME}/lib/ext/jmeter-plugins-manager.jar \
+            org.jmeterplugins.repository.PluginManagerCMDInstaller
 
-      - name: Copy Prometheus plugin
-        run: |
-          cp jmeter/lib/ext/jmeter-prometheus-plugin-0.6.0.jar jmeter-bin/lib/ext/
-
-      - name: Prepare results folder
+      - name: Prepare results directory
         run: mkdir -p $RESULTS_DIR
 
-      - name: Run JMeter test (non-GUI)
+      - name: Run JMeter Tests
         run: |
-          ./jmeter-bin/bin/jmeter \
+          ${JMETER_HOME}/bin/jmeter \
             -n \
             -t jmeter/tests/S01_JPetStore.jmx \
             -l $RESULTS_DIR/results.jtl \
             -j $RESULTS_DIR/jmeter.log \
-            -Jenv=SIT \
-            -Jsummariser.name=${{ github.run_id }}
+            -Jenv=SIT
 
       - name: Generate HTML Report
         run: |
-          ./jmeter-bin/bin/jmeter \
+          ${JMETER_HOME}/bin/jmeter \
             -g $RESULTS_DIR/results.jtl \
             -o $RESULTS_DIR/html
 
-      - name: Upload Results
+      - name: Upload HTML Report
         uses: actions/upload-artifact@v4
         with:
-          name: jmeter-results-${{ github.run_id }}
-          path: ${{ env.RESULTS_DIR }}
+          name: jmeter-html-${{ github.run_id }}
+          path: ${{ env.RESULTS_DIR }}/html
 
   publish-report:
     needs: jmeter-test
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Download HTML report artifact
+      - name: Download HTML report
         uses: actions/download-artifact@v4
         with:
-          name: jmeter-results-${{ github.run_id }}
-          path: report
+          name: jmeter-html-${{ github.run_id }}
+          path: public
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      - name: Upload to GitHub Pages
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: report
+          path: public
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
