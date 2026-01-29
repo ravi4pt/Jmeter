@@ -35,22 +35,22 @@ jobs:
         with:
           distribution: temurin
           java-version: '11'
-          cache: gradle
 
       - name: Cache JMeter
+        id: cache-jmeter
         uses: actions/cache@v4
         with:
           path: ${{ env.JMETER_HOME }}
           key: jmeter-${{ env.JMETER_VERSION }}
 
       - name: Download JMeter (if not cached)
-        if: steps.cache.outputs.cache-hit != 'true'
+        if: steps.cache-jmeter.outputs.cache-hit != 'true'
         run: |
           wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-${JMETER_VERSION}.tgz
           tar -xzf apache-jmeter-${JMETER_VERSION}.tgz
           mv apache-jmeter-${JMETER_VERSION} ${JMETER_HOME}
 
-      - name: Install JMeter Plugins
+      - name: Install JMeter Plugins Manager
         run: |
           wget -q https://repo1.maven.org/maven2/kg/apc/jmeter-plugins-manager/1.10/jmeter-plugins-manager-1.10.jar \
             -O ${JMETER_HOME}/lib/ext/jmeter-plugins-manager.jar
@@ -62,7 +62,7 @@ jobs:
       - name: Prepare results directory
         run: mkdir -p $RESULTS_DIR
 
-      - name: Run JMeter Tests
+      - name: Run JMeter Tests (Non-GUI)
         run: |
           ${JMETER_HOME}/bin/jmeter \
             -n \
@@ -77,7 +77,7 @@ jobs:
             -g $RESULTS_DIR/results.jtl \
             -o $RESULTS_DIR/html
 
-      - name: Upload HTML Report
+      - name: Upload HTML Report Artifact
         uses: actions/upload-artifact@v4
         with:
           name: jmeter-html-${{ github.run_id }}
@@ -88,16 +88,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download HTML report
+      - name: Download HTML Report
         uses: actions/download-artifact@v4
         with:
           name: jmeter-html-${{ github.run_id }}
           path: public
 
-      - name: Setup Pages
+      - name: Setup GitHub Pages
         uses: actions/configure-pages@v4
 
-      - name: Upload Pages artifact
+      - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: public
